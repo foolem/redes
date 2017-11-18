@@ -4,25 +4,21 @@ class Gerenciador
   def initialize #initialize é a primeira função que o ruby procura
     @server = TCPServer.open(5151) #abre um servidor na porta 5151
     @clients = [] #lista de clientes, declaro como vazia
-    @clients_ip = []
-    
+
+
     main #chamo a função main
   end
 
   def main
     loop do #loop infinito
 			Thread.fork(@server.accept) do |client| #pra cada cliente eu crio uma Thread
-
+        @ipv4 = client.gets.chomp
         # sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
-        puts client.peeraddr
         # @clients_ip.push remote_ip
         #adiciono ao final da lista de clientes o ip do cliente que acabou de se conectar
-        @clients.push({
-          :client_id => client.object_id,
-          :client_ip => client.peeraddr.last
-        })
 
-        puts @clients[0][:client_id]
+
+        #puts @clients[0][:client_id]
 
         listen(client) #chamo a função listen e dou como parâmetro o cliente atual
 				client.close #caso saia da função listen, ele fecha a conexão com esse cliente
@@ -32,6 +28,7 @@ class Gerenciador
 
   def listen(client)
 		sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr #esse .peeraddr é um vetor da biblioteca socket
+    remote_ip = @ipv4
     #ele contém todas essas informações que eu estou atribuindo às variáveis de cima
     #sock_domain é a posição 0, client.peeraddr[0] e assim por diante
     sign_up(client) #chamo a função sign_up e dou como parâmetro esse cliente
@@ -47,7 +44,7 @@ class Gerenciador
 
       if command == 1
         puts "Enviando lista"
-        client.puts @client_files_list #se o command for 1 eu mando a lista de arquivos pro cliente
+        client.puts @clients.push("end") #se o command for 1 eu mando a lista de arquivos pro cliente
         puts "Lista enviada"
       elsif command == 2
         clients = @clients.push("end")
@@ -55,8 +52,13 @@ class Gerenciador
       elsif command == 3
         client_list = @clients.push("end")
         client.puts client_list
+        choice = client.gets.chomp.to_i
+
+        files_to_send = @clients[choice][:files]
+        client.puts files_to_send.push("end")
+
       elsif command == 4
-        client.puts "tchau" #se dois só mando um tchauzao
+        client.puts "Tchau" #se dois só mando um tchauzao
       end
     end
 	end
@@ -64,17 +66,23 @@ class Gerenciador
 
   def sign_up(client)
     sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr #mesmas configs do cliente, só pego elas novamente
-
-    @client_files_list = [] #variável global declarada como vazia
+    remote_ip = @ipv4
+    list = []
+    puts "-------------------------------------------"
     puts "Recebendo lista de arquivos de #{remote_ip}"
     while files = client.gets #enquanto estou recebendo arquivos do cliente
       if files.chomp == "end" #para se achar a string "end"
         break
       end
-      @client_files_list.push files.chomp #adiciono ao final da lista cada arquivo
+      list.push files.chomp
       puts "De: #{remote_ip} Adicionado: #{files.chomp}"
     end
-    @client_files_list.push "end" #fora do while, após ter pego todos os arquivos, adiciono um "end" pra controle posterior
+    @clients.push({
+      :client_id => client.object_id,
+      :client_ip => @ipv4,
+      :files => list
+    })
+
   end
 
 end

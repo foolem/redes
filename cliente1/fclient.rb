@@ -1,8 +1,15 @@
 class Fclient
   require 'socket'
+  Socket::ip_address_list
+
+  def ipv4
+    ip=Socket.ip_address_list.detect{|intf| intf.ipv4_private?}
+    ip.ip_address if ip
+  end
 
   def initialize
     @socket = TCPSocket.open('localhost', 5151) #abre a conexão com o gerenciador
+    @socket.puts ipv4
     #uso futuro @port = 5001
   end
 
@@ -18,6 +25,7 @@ class Fclient
     files = get_file_list #a variável files recebe o retorno da função get_file_list
     @socket.puts files #eu mando pro socket a variável (lista de arquivos locais)
     puts "Lista de arquivos enviada"
+
   end
 
 
@@ -25,7 +33,7 @@ def menu #menuzão massa
   loop do
     file_list = [] #zero a lista de arquivos locais dessa função toda vez que o loop acontece
     clients_list = []
-
+    command = 5
     puts "-----------------MENU----------------"
     puts "|   1 - Lista de arquivos locais    |"
     puts "|   2 - Lista de Fclients           |"
@@ -46,7 +54,10 @@ def menu #menuzão massa
       end
 
       puts "--------------Arquivos------------"
-      puts file_list #escrevo na tela a lista dos meus arquivos locais que mandei pro servidor
+      file_list.each_with_index do | files, key |
+        file_list[key] = instance_eval(files)
+        puts "#{key}: #{file_list[key][:files]}"
+      end
       puts "----------------------------------"
     end
 
@@ -73,31 +84,36 @@ def menu #menuzão massa
         end
         clients_list.push clients.chomp
       end
-      i=0
-
       "----------------Fclients--------------"
       clients_list.each_with_index do | client, key |
         clients_list[key] = instance_eval(client)
-
         puts "Fclient => #{key}: #{clients_list[key][:client_ip]}"
       end
       "--------------------------------------"
 
       puts "Escolha um Fclient para receber a lista de arquivo"
       choice = gets.to_i
-      puts clients_list.length
       while choice < 0 || choice > clients_list.length
         puts "Escolha um Fclient para receber a lista de arquivo"
-        puts "entr4ei"
         puts choice
         choice = gets.to_i
       end
-      puts clients_list[choice]
+      puts "Fclient: #{clients_list[choice][:client_ip]}"
+      @socket.puts choice
+      o_files_list = []
+      while o_client_files = @socket.gets.chomp
+        if o_client_files == "end"
+          break
+        end
+        o_files_list.push o_client_files
+      end
+      puts o_files_list
     end
 
     if command == 4 #se o command for 2, envia essa mensagem pro gerenciador
       @socket.puts command #envia
       @socket.close # e fecha a conexão
+      exit
     end
 
     end
