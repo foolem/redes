@@ -26,12 +26,12 @@ def menu #menuzão massa
     file_list = [] #zero a lista de arquivos locais dessa função toda vez que o loop acontece
     clients_list = []
 
-    puts "-----------------MENU---------------"
-    puts "|      1 - Lista de arquivos        |"
-    puts "|      2 - Lista de Fclients        |"
-    puts "|      3 - Lista de arquivos        |"
-    puts "|      4 - Sair                     |"
-    puts "------------------------------------"
+    puts "-----------------MENU----------------"
+    puts "|   1 - Lista de arquivos locais    |"
+    puts "|   2 - Lista de Fclients           |"
+    puts "|   3 - Lista de arquivos fclients  |"
+    puts "|   4 - Sair                        |"
+    puts "-------------------------------------"
 
     command = gets #espero do teclado um comando
     command = command.to_i #to_i eu forço a conversão de command para inteiro, pra não ocorrer falhas
@@ -58,7 +58,41 @@ def menu #menuzão massa
         end
         clients_list.push clients.chomp
       end
-      puts clients_list
+      "----------------Fclients--------------"
+      clients_list.each do | client |
+        puts instance_eval(client)[:client_ip]
+      end
+      "--------------------------------------"
+    end
+
+    if command == 3
+      @socket.puts command
+      while clients = @socket.gets
+        if clients.chomp == "end"
+          break
+        end
+        clients_list.push clients.chomp
+      end
+      i=0
+
+      "----------------Fclients--------------"
+      clients_list.each_with_index do | client, key |
+        clients_list[key] = instance_eval(client)
+
+        puts "Fclient => #{key}: #{clients_list[key][:client_ip]}"
+      end
+      "--------------------------------------"
+
+      puts "Escolha um Fclient para receber a lista de arquivo"
+      choice = gets.to_i
+      puts clients_list.length
+      while choice < 0 || choice > clients_list.length
+        puts "Escolha um Fclient para receber a lista de arquivo"
+        puts "entr4ei"
+        puts choice
+        choice = gets.to_i
+      end
+      puts clients_list[choice]
     end
 
     if command == 4 #se o command for 2, envia essa mensagem pro gerenciador

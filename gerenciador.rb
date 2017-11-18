@@ -5,16 +5,26 @@ class Gerenciador
     @server = TCPServer.open(5151) #abre um servidor na porta 5151
     @clients = [] #lista de clientes, declaro como vazia
     @clients_ip = []
+    
     main #chamo a função main
   end
 
   def main
     loop do #loop infinito
 			Thread.fork(@server.accept) do |client| #pra cada cliente eu crio uma Thread
-        sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
-        @clients_ip.push remote_ip
-				@clients.push client #adiciono ao final da lista de clientes o ip do cliente que acabou de se conectar
-				listen(client) #chamo a função listen e dou como parâmetro o cliente atual
+
+        # sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
+        puts client.peeraddr
+        # @clients_ip.push remote_ip
+        #adiciono ao final da lista de clientes o ip do cliente que acabou de se conectar
+        @clients.push({
+          :client_id => client.object_id,
+          :client_ip => client.peeraddr.last
+        })
+
+        puts @clients[0][:client_id]
+
+        listen(client) #chamo a função listen e dou como parâmetro o cliente atual
 				client.close #caso saia da função listen, ele fecha a conexão com esse cliente
 			end
 		end
@@ -40,9 +50,11 @@ class Gerenciador
         client.puts @client_files_list #se o command for 1 eu mando a lista de arquivos pro cliente
         puts "Lista enviada"
       elsif command == 2
-        clients = @clients_ip.push("end")
+        clients = @clients.push("end")
         client.puts clients
-
+      elsif command == 3
+        client_list = @clients.push("end")
+        client.puts client_list
       elsif command == 4
         client.puts "tchau" #se dois só mando um tchauzao
       end

@@ -26,16 +26,16 @@ def menu #menuzão massa
     file_list = [] #zero a lista de arquivos locais dessa função toda vez que o loop acontece
     clients_list = []
 
-    puts "-----------------MENU---------------"
-    puts "|      1 - Lista de arquivos        |"
-    puts "|      2 - Lista de Fclients        |"
-    puts "|      3 - Lista de arquivos        |"
-    puts "|      4 - Sair                     |"
-    puts "------------------------------------"
+    puts "-----------------MENU----------------"
+    puts "|      1 - Lista de arquivos locais  |"
+    puts "|      2 - Lista de Fclients         |"
+    puts "|      3 - Lista de arquivos fclients|"
+    puts "|      4 - Sair                      |"
+    puts "-------------------------------------"
 
     command = gets #espero do teclado um comando
     command = command.to_i #to_i eu forço a conversão de command para inteiro, pra não ocorrer falhas
-
+    system "clear"
     if command == 1
       @socket.puts command # aqui ele envia pro gerenciador se for 1
       while files = @socket.gets #enquanto estou recebendo a lista de arquivos (um por um)
@@ -44,7 +44,7 @@ def menu #menuzão massa
         end
         file_list.push files.chomp #vou adicionando cada arquivo ao final do meu array file_list
       end
-      system "clear"
+
       puts "--------------Arquivos------------"
       puts file_list #escrevo na tela a lista dos meus arquivos locais que mandei pro servidor
       puts "----------------------------------"
@@ -53,12 +53,14 @@ def menu #menuzão massa
     if command == 2
       @socket.puts command
       while clients = @socket.gets
-        if clients.chomp
+        if clients.chomp == "end"
           break
         end
         clients_list.push clients.chomp
       end
+      "----------------Fclients--------------"
       puts clients_list
+      "--------------------------------------"
     end
 
     if command == 4 #se o command for 2, envia essa mensagem pro gerenciador
