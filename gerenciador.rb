@@ -11,78 +11,86 @@ class Gerenciador
 
   def main
     loop do #loop infinito
-			Thread.fork(@server.accept) do |client| #pra cada cliente eu crio uma Thread
+      Thread.fork(@server.accept) do |client| #pra cada cliente eu crio uma Thread
         @ipv4 = client.gets.chomp
-        # sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
-        # @clients_ip.push remote_ip
-        #adiciono ao final da lista de clientes o ip do cliente que acabou de se conectar
-
-
-        #puts @clients[0][:client_id]
+        client.puts client.object_id
 
         listen(client) #chamo a função listen e dou como parâmetro o cliente atual
-				client.close #caso saia da função listen, ele fecha a conexão com esse cliente
-			end
-		end
+        client.close #caso saia da função listen, ele fecha a conexão com esse cliente
+      end
+    end
   end
 
   def listen(client)
-		sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr #esse .peeraddr é um vetor da biblioteca socket
+    sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr #esse .peeraddr é um vetor da biblioteca socket
     remote_ip = @ipv4
     #ele contém todas essas informações que eu estou atribuindo às variáveis de cima
     #sock_domain é a posição 0, client.peeraddr[0] e assim por diante
     sign_up(client) #chamo a função sign_up e dou como parâmetro esse cliente
+
     puts "-----------------------------------------"
     puts "Conectado"
     puts "IP: #{remote_ip}"
     puts "Porta: #{remote_port}"
 
-		loop do #loop infinito
-			command = client.gets.chomp #espero um command do cliente
+    loop do #loop infinito
+      command = client.gets.chomp #espero um command do cliente
       command = command.to_i #forço o command a ser inteiro
-			puts "De: #{remote_ip} Pedido: #{command}"
+      puts "De: #{remote_ip} Pedido: #{command}"
 
       if command == 1
         puts "Enviando lista"
-        client.puts @clients.push("end") #se o command for 1 eu mando a lista de arquivos pro cliente
+
+        #se o command for 1 eu mando a lista de arquivos pro cliente
+        client.puts @clients.to_s
+
         puts "Lista enviada"
       elsif command == 2
-        clients = @clients.push("end")
+        clients = @clients.to_s
         client.puts clients
       elsif command == 3
-        client_list = @clients.push("end")
-        client.puts client_list
+        client.puts @clients.to_s
+
         choice = client.gets.chomp.to_i
 
         files_to_send = @clients[choice][:files]
-        client.puts files_to_send.push("end")
+        client.puts files_to_send.to_s
 
       elsif command == 4
+        delete_id = client.gets.to_i
+        puts delete_id
+
+        @clients.each do |client|
+          client.delete_if { |key, value| key == :client_id && value == delete_id }
+        end
+
         client.puts "Tchau" #se dois só mando um tchauzao
       end
     end
-	end
+  end
 
 
   def sign_up(client)
-    sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr #mesmas configs do cliente, só pego elas novamente
     remote_ip = @ipv4
-    list = []
+
+    @clients.delete_if { |hash| hash[:client_ip] == remote_ip }
+
+    puts @clients.length
+
     puts "-------------------------------------------"
     puts "Recebendo lista de arquivos de #{remote_ip}"
-    while files = client.gets #enquanto estou recebendo arquivos do cliente
-      if files.chomp == "end" #para se achar a string "end"
-        break
-      end
-      list.push files.chomp
-      puts "De: #{remote_ip} Adicionado: #{files.chomp}"
+
+    files = instance_eval(client.gets)
+
+    files.each do | file |
+      puts "De: #{remote_ip} Adicionado: #{file.chomp}"
     end
+
     @clients.push({
       :client_id => client.object_id,
       :client_ip => @ipv4,
-      :files => list
+      :files => files
     })
-
   end
 
 end
