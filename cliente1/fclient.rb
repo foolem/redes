@@ -1,10 +1,10 @@
 class Fclient
 	require 'socket'
-	Socket::ip_address_list
+	Socket::ip_address_list #ip diferente de 127
 
 	def ipv4
-		ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?}
-		@ipv4 = ip.ip_address if ip
+		ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?} #busca ipv4 no método ip_address_list da biblioteca Socket
+		@ipv4 = ip.ip_address if ip #ip_address transforma ipv4 binário em ipv4 humano (decimal)
 	end
 
 	def initialize
@@ -29,9 +29,9 @@ class Fclient
   end
 
   def sign_up #função pro registro dos arquivos
-    files = get_file_list #a variável files recebe o retorno da função get_file_list
+    files = get_file_list #a variável files recebe um vetor o retorno da função get_file_list
 
-    @socket.puts files.to_s #eu mando pro socket a variável (lista de arquivos locais)
+    @socket.puts files.to_s #eu mando pro socket a variável string (lista de arquivos locais)
     puts "Lista de arquivos enviada\n\r"
   end
 
@@ -48,8 +48,7 @@ class Fclient
       print "Opção: "
 
 
-      command = gets
-      command = command.to_i #to_i eu forço a conversão de command para inteiro, pra não ocorrer falhas
+      command = gets.to_i
 
       system "clear"
 
@@ -65,7 +64,6 @@ class Fclient
         list_hosts_files(command)
       end
 
-      #se o command for 2, envia essa mensagem pro gerenciador
       if command == 4
         download(command)
       end
@@ -124,7 +122,7 @@ class Fclient
     choice = gets.to_i
     @socket.puts choice
     puts @socket.gets
-    "--------------------------------------\n\r"
+    puts "--------------------------------------\n\r"
 
   end
 
@@ -134,30 +132,26 @@ class Fclient
 
     clients = instance_eval(@socket.gets)
 
-    "----------------Fclients--------------\n\r"
+    puts "----------------Fclients--------------\n\r"
 
     clients.each_with_index do | client, key |
       puts "Fclient => #{key}: #{client[:client_ip]}"
     end
-    "--------------------------------------\n\r"
+    puts "--------------------------------------\n\r"
 
-    puts "Escolha um Fclient para receber a lista de arquivo"
-
-    choice = gets.to_i
+    choice = -1
 
     while choice < 0 || choice > clients.length
       puts "Escolha um Fclient para receber a lista de arquivo"
+			choice = gets.to_i
       puts choice
-
-      choice = gets.to_i
     end
 
     puts "Fclient: #{clients[choice][:client_ip]}"
 
     @socket.puts choice
 
-    choice_file = instance_eval(@socket.gets.chomp)
-    puts choice_file
+
 
     o_files = instance_eval(@socket.gets)
     # puts instance_eval(files)

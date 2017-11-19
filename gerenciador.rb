@@ -38,9 +38,7 @@ class Gerenciador
       puts "De: #{remote_ip} Pedido: #{command}"
 
 
-      if command == 1
-        send_list(client)
-      elsif command == 2
+      if command == 2
         send_hosts(client)
       elsif command == 3
         list_hosts(client)
@@ -104,6 +102,11 @@ class Gerenciador
     client.puts clients
   end
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 1f789695d09aa3d4cb35526bbd663ac00de809d0
   def sign_up(client)
     remote_ip = @ipv4
     @client_server_port = client.gets.chomp.to_i
@@ -124,6 +127,7 @@ class Gerenciador
       :client_ip => @ipv4, #pega o ip
       :files => files #pega os arquivos
     })
+
   end
 
 end
