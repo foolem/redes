@@ -10,8 +10,9 @@ class Gerenciador
 
   def main
     loop do #loop infinito
-      Thread.fork(@server.accept) do |client| #pra cada cliente eu crio uma Thread, aceita varios clientes ao mensmo tempo
+      Thread.fork(@server.accept) do |client| #pra cada cliente eu crio uma Thread
         @ipv4 = client.gets.chomp
+        client.puts client.object_id
 
         listen(client) #chamo a função listen e dou como parâmetro o cliente atual
         client.close #caso saia da função listen, ele fecha a conexão com esse cliente
@@ -34,7 +35,8 @@ class Gerenciador
     puts "Porta: #{remote_port}"
 
     loop do #loop infinito
-      command = client.gets.chomp.to_i #espero um command do cliente
+      command = client.gets.chomp #espero um command do cliente
+      command = command.to_i #forço o command a ser inteiro
       puts "De: #{remote_ip} Pedido: #{command}"
 
 
@@ -52,32 +54,14 @@ class Gerenciador
 
   def download(client)
     client.puts @clients.to_s
-    choice = client.gets.chomp.to_i #choice tem o ip escolhido
+    choice = client.gets.chomp.to_i
     files_to_send = @clients[choice][:files]
     client.puts files_to_send.to_s
 
-    file = client.gets.chomp.to_i #file tem o arquivo escolhido
+    file = client.gets.chomp.to_i
+
     file_to_send = @clients[choice][:files][file]
     client.puts file_to_send
-
-
-    info = client.peeraddr
-
-		owner = @clients[choice][:client]
-		owner_server_port = @clients[choice][:port]
-		owner_info = owner.peeraddr
-
-		Thread.fork do
-			@owner_socket = TCPSocket.open(owner_info[3], owner_server_port)
-			@owner_socket.puts "upload"
-			@owner_socket.puts info[3], @client_server_port, file_to_send
-			message = @owner_socket.gets
-
-			puts "FROM: #{info(client)} #{message}"
-			puts "FILE: #{file} FROM: #{server_info(owner)} TO: #{server_info(client)}"
-		end
-
-		client.puts "SENDING FILE WISH"
 
   end
 
@@ -91,6 +75,7 @@ class Gerenciador
   end
 
   def list_hosts(client)
+    client.puts @clients.to_s
 
     choice = client.gets.chomp.to_i
     files_to_send = @clients[choice][:files]
@@ -102,25 +87,28 @@ class Gerenciador
     client.puts clients
   end
 
+
+
   def sign_up(client)
     remote_ip = @ipv4
-    @client_server_port = client.gets.chomp.to_i
-    @clients.delete_if { |hash| hash[:client_ip] == remote_ip } #se o ip que entrou já está na lista ele exclui pra não duplicar
+
+    @clients.delete_if { |hash| hash[:client_ip] == remote_ip }
+
+    puts @clients.length
 
     puts "-------------------------------------------"
     puts "Recebendo lista de arquivos de #{remote_ip}"
 
-    files = instance_eval(client.gets) #recebe a string e percebe que é um vetor e transforma
+    files = instance_eval(client.gets)
 
-    files.each do | file | #cada posição do vetor vira um file. o each significa um for
+    files.each do | file |
       puts "De: #{remote_ip} Adicionado: #{file.chomp}"
     end
 
     @clients.push({
-      :client => client,  #pega o id da coenxão com esse fcliente
-      :port => @client_server_port,
-      :client_ip => @ipv4, #pega o ip
-      :files => files #pega os arquivos
+      :client_id => client.object_id,
+      :client_ip => @ipv4,
+      :files => files
     })
 
   end
