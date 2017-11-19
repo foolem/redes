@@ -40,9 +40,7 @@ class Gerenciador
       puts "De: #{remote_ip} Pedido: #{command}"
 
 
-      if command == 1
-        send_list(client)
-      elsif command == 2
+      if command == 2
         send_hosts(client)
       elsif command == 3
         list_hosts(client)
@@ -65,12 +63,7 @@ class Gerenciador
     file_to_send = @clients[choice][:files][file]
     client.puts file_to_send
 
-
-
-
   end
-
-
 
   def disconnect(client)
     delete_ip = client.gets.chomp
@@ -94,13 +87,7 @@ class Gerenciador
     client.puts clients
   end
 
-  def send_list(client)
-    puts "Enviando lista"
 
-    client.puts @clients.to_s
-
-    puts "Lista enviada"
-  end
 
   def sign_up(client)
     remote_ip = @ipv4
@@ -123,6 +110,7 @@ class Gerenciador
       :client_ip => @ipv4,
       :files => files
     })
+
   end
 
 end
