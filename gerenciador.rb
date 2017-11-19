@@ -102,11 +102,6 @@ class Gerenciador
     client.puts clients
   end
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 1f789695d09aa3d4cb35526bbd663ac00de809d0
   def sign_up(client)
     remote_ip = @ipv4
     @client_server_port = client.gets.chomp.to_i
