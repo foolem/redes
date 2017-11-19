@@ -5,7 +5,6 @@ class Gerenciador
     @server = TCPServer.open(5151) #abre um servidor na porta 5151
     @clients = [] #lista de clientes, declaro como vazia
 
-
     main #chamo a função main
   end
 
@@ -22,11 +21,13 @@ class Gerenciador
   end
 
   def listen(client)
+
     sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr #esse .peeraddr é um vetor da biblioteca socket
     remote_ip = @ipv4
     #ele contém todas essas informações que eu estou atribuindo às variáveis de cima
     #sock_domain é a posição 0, client.peeraddr[0] e assim por diante
     sign_up(client) #chamo a função sign_up e dou como parâmetro esse cliente
+
 
     puts "-----------------------------------------"
     puts "Conectado"
@@ -38,37 +39,73 @@ class Gerenciador
       command = command.to_i #forço o command a ser inteiro
       puts "De: #{remote_ip} Pedido: #{command}"
 
+
       if command == 1
-        puts "Enviando lista"
-
-        #se o command for 1 eu mando a lista de arquivos pro cliente
-        client.puts @clients.to_s
-
-        puts "Lista enviada"
+        send_list(client)
       elsif command == 2
-        clients = @clients.to_s
-        client.puts clients
+        send_hosts(client)
       elsif command == 3
-        client.puts @clients.to_s
-
-        choice = client.gets.chomp.to_i
-
-        files_to_send = @clients[choice][:files]
-        client.puts files_to_send.to_s
-
+        list_hosts(client)
       elsif command == 4
-        delete_id = client.gets.to_i
-        puts delete_id
-
-        @clients.each do |client|
-          client.delete_if { |key, value| key == :client_id && value == delete_id }
-        end
-
-        client.puts "Tchau" #se dois só mando um tchauzao
+        download(client)
+      elsif command == 5
+        disconnect(client)
       end
     end
   end
 
+  def download(client)
+    client.puts @clients.to_s
+    choice = client.gets.chomp.to_i
+    files_to_send = @clients[choice][:files]
+    client.puts files_to_send.to_s
+
+    file = client.gets.chomp
+    owner = find_owner(file)
+
+
+  end
+
+  def find_owner(file)
+    @clients.each do | client |
+      if client[:files].has_value(file.chomp)
+        puts "achei"
+      else
+        puts "nao"
+      end
+    end
+
+	end
+
+  def disconnect(client)
+    delete_ip = client.gets.chomp
+    puts delete_ip
+
+    @clients.delete_if { |hash| hash[:client_ip] == delete_ip }
+
+    client.puts "Tchau" #se dois só mando um tchauzao
+  end
+
+  def list_hosts(client)
+    client.puts @clients.to_s
+
+    choice = client.gets.chomp.to_i
+    files_to_send = @clients[choice][:files]
+    client.puts files_to_send.to_s
+  end
+
+  def send_hosts(client)
+    clients = @clients.to_s
+    client.puts clients
+  end
+
+  def send_list(client)
+    puts "Enviando lista"
+
+    client.puts @clients.to_s
+
+    puts "Lista enviada"
+  end
 
   def sign_up(client)
     remote_ip = @ipv4
