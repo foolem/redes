@@ -63,6 +63,25 @@ class Gerenciador
     file_to_send = @clients[choice][:files][file]
     client.puts file_to_send
 
+
+
+		owner = @clients[choice]
+		owner_server_port = @clients[choice][:port]
+		owner_ipv4 = @clients[choice][:client_ip]
+
+		Thread.fork do
+			@owner_socket = TCPSocket.open(owner_ipv4, owner_server_port)
+			@owner_socket.puts "UPLOAD"
+			@owner_socket.puts @ipv4, @port, file_to_send
+			message = @owner_socket.gets
+
+			puts "FROM: #{info(client)} #{message}"
+			puts "FILE: #{file} FROM: #{server_info(owner)} TO: #{server_info(client)}"
+		end
+
+		client.puts "SENDING FILE WISH"
+
+
   end
 
   def disconnect(client)
@@ -91,7 +110,6 @@ class Gerenciador
 
   def sign_up(client)
     remote_ip = @ipv4
-
     @clients.delete_if { |hash| hash[:client_ip] == remote_ip }
 
     puts @clients.length
@@ -100,16 +118,19 @@ class Gerenciador
     puts "Recebendo lista de arquivos de #{remote_ip}"
 
     files = instance_eval(client.gets)
+    @port = client.gets.chomp.to_i
 
     files.each do | file |
       puts "De: #{remote_ip} Adicionado: #{file.chomp}"
     end
 
     @clients.push({
-      :client_id => client.object_id,
+      :port => @port,
       :client_ip => @ipv4,
       :files => files
     })
+
+
 
   end
 

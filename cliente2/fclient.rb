@@ -10,11 +10,10 @@ class Fclient
 	def initialize
     @socket = TCPSocket.open('localhost', 5151) #abre a conexão com o gerenciador
     @socket.puts ipv4
-		@socket.puts @port
     @port = 5000
+		Thread.fork { server }
 
     @id = @socket.gets
-		Thread.fork { server }
   end
 
   def main
@@ -31,8 +30,9 @@ class Fclient
   def sign_up #função pro registro dos arquivos
     files = get_file_list #a variável files recebe um vetor o retorno da função get_file_list
 
-    @socket.puts files.to_s #eu mando pro socket a variável string (lista de arquivos locais)
-    puts "Lista de arquivos enviada\n\r"
+		@socket.puts files.to_s #eu mando pro socket a variável string (lista de arquivos locais)
+		@socket.puts @port.to_i
+		puts "Lista de arquivos enviada\n\r"
   end
 
 
@@ -194,65 +194,67 @@ class Fclient
   end
 
 	def server
-		@server = TCPServer.open(@port)
+    @server = TCPServer.open(@port)
 
-		@clients = []
-		loop do
-			Thread.fork(@server.accept) do |client|
-				listen(client)
-				client.close
-			end
-		end
-	end
+    @client_list = []
+    loop do
+      Thread.fork(@server.accept) do |client|
+        @client_list.push client
+        listener(client)
+        client.close
+      end
+    end
+  end
 
-	def listen(client)
-		sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
+  def listener(client)
+    sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
 
-		loop do
+    loop do
 			command = client.gets.chomp
-			puts command
-			puts "De: #{remote_ip}:#{remote_port} pedido: #{command}"
+      puts command
+			puts "FROM: #{remote_ip}:#{remote_port} REQUEST: #{command}"
 
-			if command == "upload"
-				source_ip = client.gets.chomp
-				source_port = client.gets.chomp
-				file = client.gets.chomp
-				client.puts "Encontrado"
+      if command == "UPLOAD"
+        source_ip = client.gets.chomp
+        source_port = client.gets.chomp
+        file = client.gets.chomp
+        client.puts "FOUND SERVER"
 
-				Thread.fork do
+        Thread.fork do
 					puts "Trying to connect with: #{source_ip}:#{source_port}"
-					@socket_file = TCPSocket.open(source_ip, source_port.to_i)
-					@socket_file.puts "DOWNLOAD"
+          @socket_file = TCPSocket.open(source_ip, source_port.to_i)
+          @socket_file.puts "DOWNLOAD"
 
-					@socket_file.puts(file)
-					file = open("#{file}", "rb")
-					fileContent = file.read
-					@socket_file.puts(fileContent)
-					@socket_file.puts "end"
+          @socket_file.puts(file)
+          file = open("#{file}", "rb")
+      		fileContent = file.read
+          @socket_file.puts(fileContent)
+          @socket_file.puts "END"
 
-					puts "ENVIANDO SAIDA"
-				end
+          puts "ENVIANDO SAIDA"
+        end
 
-			elsif command == "upload"
+      elsif command == "DOWNLOAD"
 
-				puts "RECEBENDO"
+        puts "RECEBENDO"
 
-				file = client.gets.chomp
-				time = Time.now.strftime "%Y%m%d%H%M%S"
-				destFile = File.open("FClient_x_#{time}_#{file}", 'wb')
-				loop do
-					data = client.gets
-					if data.chomp == "end"
-						break
-					end
-					destFile.print data
-				end
-				destFile.close
+        file = client.gets.chomp
+        time = Time.now.strftime "%Y%m%d%H%M%S"
+        destFile = File.open("FClient_x_#{time}_#{file}", 'wb')
+        loop do
+          data = client.gets
+          if data.chomp == "END"
+            break
+          end
+          destFile.print data
+        end
+        destFile.close
 
-				puts "Arquivo Recebido"
-			end
+        puts "Arquivo Recebido"
+      end
 
-		end
-	end
+    end
+  end
+
 end
 Fclient.new.main
