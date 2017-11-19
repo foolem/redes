@@ -60,22 +60,17 @@ class Gerenciador
     files_to_send = @clients[choice][:files]
     client.puts files_to_send.to_s
 
-    file = client.gets.chomp
-    owner = find_owner(file)
+    file = client.gets.chomp.to_i
+
+    file_to_send = @clients[choice][:files][file]
+    client.puts file_to_send
+
+
 
 
   end
 
-  def find_owner(file)
-    @clients.each do | client |
-      if client[:files].has_value(file.chomp)
-        puts "achei"
-      else
-        puts "nao"
-      end
-    end
 
-	end
 
   def disconnect(client)
     delete_ip = client.gets.chomp

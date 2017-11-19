@@ -111,7 +111,6 @@ class Fclient
     @socket.puts choice
 
     o_files = instance_eval(@socket.gets.chomp)
-    puts o_files
 
     puts "--------------Arquivos------------\n\r"
 
@@ -121,7 +120,8 @@ class Fclient
 
     puts "Escolha o arquivo a ser baixado"
     choice = gets.to_i
-    @socket.puts o_files[choice].to_s
+    @socket.puts choice
+    puts @socket.gets
     "--------------------------------------\n\r"
 
   end
