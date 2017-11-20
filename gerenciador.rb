@@ -65,7 +65,6 @@ class Gerenciador
 
 
 
-		owner = @clients[choice]
 		owner_server_port = @clients[choice][:port]
 		owner_ipv4 = @clients[choice][:client_ip]
 
@@ -75,8 +74,8 @@ class Gerenciador
 			@owner_socket.puts @ipv4, @port, file_to_send
 			message = @owner_socket.gets
 
-			puts "FROM: #{info(client)} #{message}"
-			puts "FILE: #{file} FROM: #{server_info(owner)} TO: #{server_info(client)}"
+			puts " #{message}"
+			puts "FILE: #{file_to_send} FROM: #{@clients[choice][:client_ip]} TO: #{@ipv4}"
 		end
 
 		client.puts "SENDING FILE WISH"
