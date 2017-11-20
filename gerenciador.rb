@@ -4,7 +4,7 @@ class Gerenciador
   def initialize #initialize é a primeira função que o ruby procura
     @server = TCPServer.open(5151) #abre um servidor na porta 5151
     @clients = [] #lista de clientes, declaro como vazia
-
+    @clients_object = []
     main #chamo a função main
   end
 
@@ -12,6 +12,8 @@ class Gerenciador
     loop do #loop infinito
       Thread.fork(@server.accept) do |client| #pra cada cliente eu crio uma Thread
         @ipv4 = client.gets.chomp
+        client.puts client.peeraddr[1]
+
         client.puts client.object_id
 
         listen(client) #chamo a função listen e dou como parâmetro o cliente atual
@@ -63,24 +65,15 @@ class Gerenciador
     file_to_send = @clients[choice][:files][file]
     client.puts file_to_send
 
+    file_to_receive = client.gets.chomp
 
-
-		owner = @clients[choice]
-		owner_server_port = @clients[choice][:port]
-		owner_ipv4 = @clients[choice][:client_ip]
-
-		Thread.fork do
-			@owner_socket = TCPSocket.open(owner_ipv4, owner_server_port)
-			@owner_socket.puts "UPLOAD"
-			@owner_socket.puts @ipv4, @port, file_to_send
-			message = @owner_socket.gets
-
-			puts "FROM: #{info(client)} #{message}"
-			puts "FILE: #{file} FROM: #{server_info(owner)} TO: #{server_info(client)}"
-		end
-
-		client.puts "SENDING FILE WISH"
-
+    ncat_s = client.gets.chomp.to_s
+    @clients_object.each do | obj |
+      if obj[:ip] == @clients[choice][:client_ip]
+        puts "achei o cara bom"
+        break
+      end
+    end
 
   end
 
@@ -124,12 +117,14 @@ class Gerenciador
       puts "De: #{remote_ip} Adicionado: #{file.chomp}"
     end
 
+
     @clients.push({
       :port => @port,
       :client_ip => @ipv4,
       :files => files
     })
-
+    @clients_object.push({:ip => @ipv4, :client => client})
+    puts @clients_object
 
 
   end
