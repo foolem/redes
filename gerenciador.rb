@@ -65,16 +65,6 @@ class Gerenciador
     file_to_send = @clients[choice][:files][file]
     client.puts file_to_send
 
-    file_to_receive = client.gets.chomp
-
-    ncat_s = client.gets.chomp.to_s
-    @clients_object.each do | obj |
-      if obj[:ip] == @clients[choice][:client_ip]
-        puts "achei o cara bom"
-        break
-      end
-    end
-
   end
 
   def disconnect(client)

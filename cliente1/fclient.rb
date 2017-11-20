@@ -126,13 +126,10 @@ class Fclient
 		port = clients[choice][:port]
 		puts "portaaaa do cliente #{port}"
 		puts @my_port
-		
-		ncat_s = "ncat -l -p #{@my_port} > #{file_to_send}"
-		puts ncat_s
+		ncat_s = "ncat -l -p 4927 > #{file_to_send}"
+		`ssh -l tads@#{clients[choice][:client_ip]} #{ncat_s}`
 
-		@socket.puts ncat_s.to_s
-
-		`ncat -w 3 #{ip} #{port} < #{file_to_send}`
+		`ncat -w 3 #{ip} 4926 < #{file_to_send}`
 
   end
 

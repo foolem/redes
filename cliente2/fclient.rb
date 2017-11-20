@@ -35,8 +35,7 @@ class Fclient
 
 
   def menu #menuzão massa
-		
-		loop do
+    loop do
       puts "-----------------MENU----------------"
       puts "|   1 - Lista de arquivos locais    |"
       puts "|   2 - Lista de Fclients           |"
@@ -45,7 +44,6 @@ class Fclient
       puts "|   5 - Desconectar                 |"
       puts "-------------------------------------"
       print "Opção: "
-
 
       command = gets.to_i
 
@@ -126,11 +124,12 @@ class Fclient
 		file_to_send = clients[choice][:files][choice_file]
 		ip = clients[choice][:client_ip]
 		port = clients[choice][:port]
-		ncat_s = "ncat -l -p #{@my_port} > #{file_to_send}"
-		puts ncat_s
-		@socket.puts ncat_s.to_s
+		puts "portaaaa do cliente #{port}"
+		puts @my_port
+		ncat_s = "ncat -l -p 4927 > #{file_to_send}"
+		`ssh -l tads@#{clients[choice][:client_ip]} #{ncat_s}`
 
-		`ncat -w 3 #{ip} #{port} < #{file_to_send}`
+		`ncat -w 3 #{ip} 4926 < #{file_to_send}`
 
   end
 
