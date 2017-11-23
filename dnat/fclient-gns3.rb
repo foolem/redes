@@ -121,7 +121,6 @@ class FClient
 
   def server
     @server = TCPServer.open(@my_port)
-
     @client_list = []
     loop do
       Thread.fork(@server.accept) do |client|
@@ -147,7 +146,7 @@ class FClient
         client.puts "FOUND SERVER"
 
         Thread.fork do
-puts "Trying to connect with: #{source_ip}:#{source_port}"
+          puts "Trying to connect with: #{source_ip}:#{source_port}"
           @socket_file = TCPSocket.open(source_ip, source_port.to_i)
           @socket_file.puts "DOWNLOAD"
 
