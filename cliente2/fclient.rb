@@ -14,7 +14,6 @@ class Fclient
 		Thread.fork { server }
 
     @id = @socket.gets
-		@my_id = gets.to_i
   end
 
   def main
@@ -241,7 +240,7 @@ class Fclient
 
         file = client.gets.chomp
         time = Time.now.strftime "%Y%m%d%H%M%S"
-        destFile = File.open("FClient_#{@my_id}_#{time}_#{file}", 'wb')
+        destFile = File.open("FClient_x_#{time}_#{file}", 'wb')
         loop do
           data = client.gets
           if data.chomp == "END"

@@ -4,15 +4,16 @@ class Gerenciador
   def initialize #initialize é a primeira função que o ruby procura
     @server = TCPServer.open(5151) #abre um servidor na porta 5151
     @clients = [] #lista de clientes, declaro como vazia
+
     main #chamo a função main
   end
 
   def main
     loop do #loop infinito
       Thread.fork(@server.accept) do |client| #pra cada cliente eu crio uma Thread
-        #@ipv4 = client.gets.chomp
-        client.puts client.peeraddr[1]
-        client.puts client.peeraddr[3]
+        @ipv4 = client.gets.chomp
+        client.puts client.object_id
+
         listen(client) #chamo a função listen e dou como parâmetro o cliente atual
         client.close #caso saia da função listen, ele fecha a conexão com esse cliente
       end
@@ -22,10 +23,11 @@ class Gerenciador
   def listen(client)
 
     sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr #esse .peeraddr é um vetor da biblioteca socket
-    #remote_ip = @ipv4
+    remote_ip = @ipv4
     #ele contém todas essas informações que eu estou atribuindo às variáveis de cima
     #sock_domain é a posição 0, client.peeraddr[0] e assim por diante
     sign_up(client) #chamo a função sign_up e dou como parâmetro esse cliente
+
 
     puts "-----------------------------------------"
     puts "Conectado"
@@ -62,18 +64,19 @@ class Gerenciador
     client.puts file_to_send
 
 
-    owner = @clients[choice]
+
+		owner = @clients[choice]
 		owner_server_port = @clients[choice][:port]
 		owner_ipv4 = @clients[choice][:client_ip]
 
 		Thread.fork do
-		@owner_socket = TCPSocket.open(owner_ipv4, owner_server_port)
+			@owner_socket = TCPSocket.open(owner_ipv4, owner_server_port)
 			@owner_socket.puts "UPLOAD"
-			@owner_socket.puts @my_ip, @port, file_to_send
+			@owner_socket.puts @ipv4, @port, file_to_send
 			message = @owner_socket.gets
 
-			puts "FROM: #{@my_ip} #{message}"
-			puts "FILE: #{file} FROM: #{@my_ip} TO: #{owner_ipv4}"
+			puts "FROM: #{info(client)} #{message}"
+			puts "FILE: #{file} FROM: #{server_info(owner)} TO: #{server_info(client)}"
 		end
 
 		client.puts "SENDING FILE WISH"
@@ -103,10 +106,13 @@ class Gerenciador
     client.puts clients
   end
 
+
+
   def sign_up(client)
-    sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr #esse .peeraddr é um vetor da biblioteca socket
-    @my_ip = remote_ip
+    remote_ip = @ipv4
     @clients.delete_if { |hash| hash[:client_ip] == remote_ip }
+
+    puts @clients.length
 
     puts "-------------------------------------------"
     puts "Recebendo lista de arquivos de #{remote_ip}"
@@ -120,9 +126,11 @@ class Gerenciador
 
     @clients.push({
       :port => @port,
-      :client_ip => @my_ip,
+      :client_ip => @ipv4,
       :files => files
     })
+
+
 
   end
 
