@@ -1,27 +1,25 @@
 class Fclient
-  require 'socket'
-  Socket::ip_address_list #ip diferente de 127
+	require 'socket'
+	Socket::ip_address_list #ip diferente de 127
 
-  #def ipv4
-    #ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?} #busca ipv4 no método ip_address_list da biblioteca Socket
-  	#@ipv4 = ip.ip_address if ip #ip_address transforma ipv4 binário em ipv4 humano (decimal)
-  #end
-
-  def initialize
-		@socket = TCPSocket.open('localhost', 5151) #abre a conexão com o gerenciador
-		Thread.fork { server }
-		#@socket.puts ipv4
-    @my_port = @socket.gets.chomp.to_i
-		@my_port = 6666
-		@id = @socket.gets
-  	puts "ID do cliente?"
-  	@my_id = gets.to_i
+	def ipv4
+		ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?} #busca ipv4 no método ip_address_list da biblioteca Socket
+		@ipv4 = ip.ip_address if ip #ip_address transforma ipv4 binário em ipv4 humano (decimal)
 	end
 
-  def main
-    puts "conectado"
+	def initialize
+    @socket = TCPSocket.open('localhost', 5151) #abre a conexão com o gerenciador
+    @socket.puts ipv4
+    @port = 5000
+		Thread.fork { server }
 
-    system "clear"
+    @id = @socket.gets
+  end
+
+  def main
+  	puts "conectado"
+
+  	system "clear"
 
     sign_up #chama a função sign_up
     menu #chama a função menu após voltar da sign_up
@@ -32,12 +30,13 @@ class Fclient
   def sign_up #função pro registro dos arquivos
     files = get_file_list #a variável files recebe um vetor o retorno da função get_file_list
 
-    @socket.puts files.to_s #eu mando pro socket a variável string (lista de arquivos locais)
-    @socket.puts @my_port
-    puts "Lista de arquivos enviada\n\r"
+		@socket.puts files.to_s #eu mando pro socket a variável string (lista de arquivos locais)
+		@socket.puts @port.to_i
+		puts "Lista de arquivos enviada\n\r"
   end
 
-  def menu
+
+  def menu #menuzão massa
     loop do
       puts "-----------------MENU----------------"
       puts "|   1 - Lista de arquivos locais    |"
@@ -47,6 +46,7 @@ class Fclient
       puts "|   5 - Desconectar                 |"
       puts "-------------------------------------"
       print "Opção: "
+
 
       command = gets.to_i
 
@@ -74,7 +74,6 @@ class Fclient
 
     end
   end
-
   def disconnect(command)
     @socket.puts command
     @socket.puts @ipv4.to_s
@@ -90,12 +89,12 @@ class Fclient
 
     clients = instance_eval(@socket.gets)
 
-    puts "----------------Fclients--------------\n\r"
+    "----------------Fclients--------------\n\r"
 
     clients.each_with_index do | client, key |
       puts "Fclient => #{key}: #{client[:client_ip]}"
     end
-    puts "--------------------------------------\n\r"
+    "--------------------------------------\n\r"
 
     puts "Escolha um Fclient para receber arquivo"
 
@@ -120,28 +119,13 @@ class Fclient
     end
 
     puts "Escolha o arquivo a ser baixado"
-    choice_file = gets.to_i
-    @socket.puts choice_file
+    choice = gets.to_i
+    @socket.puts choice
     puts @socket.gets
     puts "--------------------------------------\n\r"
 
-    #file_to_send = clients[choice][:files][choice_file]
-    #ip = clients[choice][:client_ip]
-		#puts ip
-    #port = clients[choice][:port]
-		#puts port
-    #r = Random.new
-    #r = r.rand(10..999)
-    #time = Time.now.strftime "%Y%m%d%H%M%S"
-
-    #file_to_send = file_to_send.to_s
-    #real_file = "FClient_#{@my_id}_#{time}#{file_to_send}"
-    #`ncat -l -p 6#{r} > #{real_file}&`
-    #write = "ncat -w 3 #{ip} 6#{r} < #{file_to_send}&"
-    #write = write.to_s
-    #`ssh transfer@#{clients[choice][:client_ip]} '#{write}'`
-
   end
+
 
   def list_hosts_files(command)
     @socket.puts command
@@ -159,13 +143,15 @@ class Fclient
 
     while choice < 0 || choice > clients.length
       puts "Escolha um Fclient para receber a lista de arquivo"
-                        choice = gets.to_i
+			choice = gets.to_i
       puts choice
     end
 
     puts "Fclient: #{clients[choice][:client_ip]}"
 
     @socket.puts choice
+
+
 
     o_files = instance_eval(@socket.gets)
     # puts instance_eval(files)
@@ -208,69 +194,67 @@ class Fclient
   end
 
 	def server
-		@server = TCPServer.open(@my_port)
-		@client_list = []
-		loop do
-			Thread.fork(@server.accept) do |client|
-				pust "alo acorda"
-				@client_list.push client
-				listener(client)
-				client.close
-			end
-		end
-	end
+    @server = TCPServer.open(@port)
 
-	def listener(client)
-		sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
+    @client_list = []
+    loop do
+      Thread.fork(@server.accept) do |client|
+        @client_list.push client
+        listener(client)
+        client.close
+      end
+    end
+  end
 
-		loop do
+  def listener(client)
+    sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
+
+    loop do
 			command = client.gets.chomp
-			puts command
+      puts command
 			puts "FROM: #{remote_ip}:#{remote_port} REQUEST: #{command}"
 
-			if command == "UPLOAD"
-				puts "TESTEEEEEEEEEEEE"
-				source_ip = client.gets.chomp
-				source_port = client.gets.chomp
-				file = client.gets.chomp
-				client.puts "FOUND SERVER"
+      if command == "UPLOAD"
+        source_ip = client.gets.chomp
+        source_port = client.gets.chomp
+        file = client.gets.chomp
+        client.puts "FOUND SERVER"
 
-				Thread.fork do
+        Thread.fork do
 					puts "Trying to connect with: #{source_ip}:#{source_port}"
-					@socket_file = TCPSocket.open(source_ip, source_port.to_i)
-					@socket_file.puts "DOWNLOAD"
+          @socket_file = TCPSocket.open(source_ip, source_port.to_i)
+          @socket_file.puts "DOWNLOAD"
 
-					@socket_file.puts(file)
-					file = open("#{file}", "rb")
-					fileContent = file.read
-					@socket_file.puts(fileContent)
-					@socket_file.puts "END"
+          @socket_file.puts(file)
+          file = open("#{file}", "rb")
+      		fileContent = file.read
+          @socket_file.puts(fileContent)
+          @socket_file.puts "END"
 
-					puts "ENVIANDO SAIDA"
-				end
+          puts "ENVIANDO SAIDA"
+        end
 
-			elsif command == "DOWNLOAD"
+      elsif command == "DOWNLOAD"
 
-				puts "RECEBENDO"
+        puts "RECEBENDO"
 
-				file = client.gets.chomp
-				time = Time.now.strftime "%Y%m%d%H%M%S"
-				destFile = File.open("aaaaaaaaaFClient_#{@my_id}_#{time}_#{file}", 'wb')
-				loop do
-					data = client.gets
-					if data.chomp == "END"
-						break
-					end
-					destFile.print data
-				end
-				destFile.close
+        file = client.gets.chomp
+        time = Time.now.strftime "%Y%m%d%H%M%S"
+        destFile = File.open("FClient_x_#{time}_#{file}", 'wb')
+        loop do
+          data = client.gets
+          if data.chomp == "END"
+            break
+          end
+          destFile.print data
+        end
+        destFile.close
 
-				puts "Arquivo Recebido"
-			end
+        puts "Arquivo Recebido"
+      end
 
-		end
-	end
-
+    end
+  end
 
 end
 Fclient.new.main
