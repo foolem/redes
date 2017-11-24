@@ -23,7 +23,6 @@ class Gerenciador
   def listen(client)
 
     sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr #esse .peeraddr é um vetor da biblioteca socket
-    remote_ip = @ipv4
     #ele contém todas essas informações que eu estou atribuindo às variáveis de cima
     #sock_domain é a posição 0, client.peeraddr[0] e assim por diante
     sign_up(client) #chamo a função sign_up e dou como parâmetro esse cliente
@@ -66,17 +65,17 @@ class Gerenciador
 
 
 		owner = @clients[choice]
-		owner_server_port = @clients[choice][:port]
+		owner_server_port = @clients[choice][:port_server]
 		owner_ipv4 = @clients[choice][:client_ip]
 
 		Thread.fork do
 			@owner_socket = TCPSocket.open(owner_ipv4, owner_server_port)
 			@owner_socket.puts "UPLOAD"
-			@owner_socket.puts @ipv4, @port, file_to_send
+			@owner_socket.puts @ipv4, client.port_server, file_to_send
 			message = @owner_socket.gets
 
-			puts "FROM: #{info(client)} #{message}"
-			puts "FILE: #{file} FROM: #{server_info(owner)} TO: #{server_info(client)}"
+			puts "FROM: #{@ipv4} #{message}"
+			puts "FILE: #{file} FROM: #{@ipv4} TO: #{owner_ipv4}"
 		end
 
 		client.puts "SENDING FILE WISH"
@@ -109,7 +108,8 @@ class Gerenciador
 
 
   def sign_up(client)
-    remote_ip = @ipv4
+    sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr #esse .peeraddr é um vetor da biblioteca socket
+    @ipv4 = remote_ip
     @clients.delete_if { |hash| hash[:client_ip] == remote_ip }
 
     puts @clients.length
@@ -125,8 +125,9 @@ class Gerenciador
     end
 
     @clients.push({
-      :port => @port,
-      :client_ip => @ipv4,
+      :port_socket => remote_port,
+      :port_server => @port,
+      :client_ip => remote_ip,
       :files => files
     })
 

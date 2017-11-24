@@ -8,12 +8,13 @@ class Fclient
 	end
 
 	def initialize
-    @socket = TCPSocket.open('localhost', 5151) #abre a conexão com o gerenciador
+    @socket = TCPSocket.open('200.0.0.1', 5151) #abre a conexão com o gerenciador
     @socket.puts ipv4
-    @port = 5000
+    @port = 5003
 		Thread.fork { server }
 
     @id = @socket.gets
+		@my_id = gets.to_i
   end
 
   def main
@@ -240,7 +241,7 @@ class Fclient
 
         file = client.gets.chomp
         time = Time.now.strftime "%Y%m%d%H%M%S"
-        destFile = File.open("FClient_x_#{time}_#{file}", 'wb')
+        destFile = File.open("FClient_#{@my_id}_#{time}_#{file}", 'wb')
         loop do
           data = client.gets
           if data.chomp == "END"
