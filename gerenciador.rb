@@ -14,8 +14,9 @@ class Gerenciador
       Thread.fork(@server.accept) do |client| #pra cada cliente eu crio uma Thread
         sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
         @ipv4 = client.gets.chomp
+        @socket_port client.gets.chomp
         client.puts client.peeraddr[1]
-
+        client.puts client.remote_ip
         listen(client) #chamo a função listen e dou como parâmetro o cliente atual
         client.close #caso saia da função listen, ele fecha a conexão com esse cliente
       end
@@ -63,13 +64,8 @@ class Gerenciador
 
     file_to_send = @clients[choice][:files][file]
     client.puts file_to_send
-
-		owner_server_port = @clients[choice][:port_server]
-    owner_port = @clients[choice][:socket_port]
-		owner_ipv4 = @clients[choice][:client_ip]
-
-		
-
+    puts client.gets.chomp
+    puts client.gets.chomp
   end
 
   def disconnect(client)
@@ -115,7 +111,7 @@ class Gerenciador
 
     @clients.push({
       :socket_port => remote_port,
-      :port_server => @port,
+      :server_port => @port,
       :client_ip => remote_ip,
       :files => files
     })

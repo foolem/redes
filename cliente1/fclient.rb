@@ -10,11 +10,13 @@ class Fclient
 	def initialize
     @socket = TCPSocket.open('200.0.0.1', 5151) #abre a conexão com o gerenciador
     @socket.puts ipv4
-    @port = 5000
+    @port = 6000
+		@socket.puts @port
 		Thread.fork { server }
 
     @id = @socket.gets
 		@my_nat_port = gets.to_i
+		@my_nat_ip = @socket.gets.chomp
   end
 
   def main
@@ -125,15 +127,17 @@ class Fclient
     puts @socket.gets
     puts "--------------------------------------\n\r"
 		file_to_send = clients[choice][:files][choice_file]
+		owner_ip = clients[choice][:client_ip]
+		owner_port = clients[choice][:server_port]
 
 		Thread.fork do
-			@owner_socket = TCPSocket.open(clients[choice][:client_ip], 6002)
-			@owner_socket.puts "UPLOAD"
-			@owner_socket.puts 200.0.0.2, 6000, file_to_send
+			@owner_socket = TCPSocket.open(owner_ip, owner_port)
+			@owner_socket.puts "Solicitacao"
+			@owner_socket.puts @my_nat_ip, @port, file_to_send
 			message = @owner_socket.gets
 
-			puts "FROM: #{@ipv4} #{message}"
-			puts "FILE: #{file} FROM: #{@ipv4} TO: #{owner_ipv4}"
+			puts "Download requisitado ao #{owner_ip}"
+			puts "Arquivo: #{file_to_send}"
 		end
 
 
@@ -207,7 +211,7 @@ class Fclient
   end
 
 	def server
-    @server = TCPServer.open(6000)
+    @server = TCPServer.open(@port)
 		@server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEPORT, 1)
 
 
@@ -226,51 +230,83 @@ class Fclient
 
     loop do
 			command = client.gets.chomp
-      puts command
-			puts "FROM: #{remote_ip}:#{remote_port} REQUEST: #{command}"
 
-      if command == "UPLOAD"
+      if command == "Solicitacao"
         source_ip = client.gets.chomp
-				source_ip = '200.0.0.3'
         source_port = client.gets.chomp
-				source_port = 6002
         file = client.gets.chomp
-        client.puts "FOUND SERVER"
+				puts "#{source_ip} Deseja o download do arquivo #{file}"
+        client.puts "#{@my_nat_ip}: Dados recebidos com sucesso!"
 
         Thread.fork do
-					puts "Trying to connect with: #{source_ip}:#{source_port}"
+					puts "Tentando conexão com: #{source_ip}:#{source_port}"
           @socket_file = TCPSocket.open(source_ip, source_port.to_i)
-          @socket_file.puts "DOWNLOAD"
+					if(@socket_file != nil)
 
-          @socket_file.puts(file)
-          file = open("#{file}", "rb")
-      		fileContent = file.read
-          @socket_file.puts(fileContent)
-          @socket_file.puts "END"
+						puts "Conexão iniciada com sucesso"
+						@socket.puts "Funcional: #{@my_nat_ip} conectou com sucesso ao #{source_ip}"
 
-          puts "ENVIANDO SAIDA"
+
+					  @socket_file.puts "Download"
+
+	          @socket_file.puts(file)
+	          file = open("#{file}", "rb")
+	      		fileContent = file.read
+	          @socket_file.puts(fileContent)
+	          @socket_file.puts "end"
+					end
+					if(@socket_file == nil)
+						@socket.puts "Problema: #{@my_nat_ip} não conectou com sucesso ao #{source_ip}"
+						@socket_file.puts "Problem"
+					end
+
         end
 
-      elsif command == "DOWNLOAD"
+      elsif command == "Download"
 
-        puts "RECEBENDO"
+        puts "Recebendo arquivo"
 
         file = client.gets.chomp
         time = Time.now.strftime "%Y%m%d%H%M%S"
         destFile = File.open("FClient_#{@my_id}_#{time}_#{file}", 'wb')
         loop do
           data = client.gets
-          if data.chomp == "END"
+          if data.chomp == "end"
             break
           end
           destFile.print data
         end
         destFile.close
 
-        puts "Arquivo Recebido"
+        puts "Arquivo Recebido :)"
+				@socket.puts "Arquivo #{file} foi enviado de #{source_ip} para #{@my_nat_ip}"
       end
 
-    end
+			elsif command == "Problem"
+				Thread.fork do
+					puts "Tentando conexão com: #{source_ip}:#{source_port}"
+          @socket_file = TCPSocket.open(source_ip, source_port.to_i)
+					if(@socket_file != nil)
+
+						puts "Conexão iniciada com sucesso"
+						@socket.puts "Funcional: #{@my_nat_ip} conectou com sucesso ao #{source_ip}"
+
+
+					  @socket_file.puts "Download"
+
+	          @socket_file.puts(file)
+	          file = open("#{file}", "rb")
+	      		fileContent = file.read
+	          @socket_file.puts(fileContent)
+	          @socket_file.puts "end"
+					end
+					if(@socket_file == nil)
+						@socket.puts "Problema: #{@my_nat_ip} não conectou com sucesso ao #{source_ip}"
+						@socket.puts "DualProblema: a conexão entre #{@my_nat_ip} e #{source_ip}"
+						puts "Erro ao conectar com #{source_ip}"
+					end
+			end
+
   end
 
 end
