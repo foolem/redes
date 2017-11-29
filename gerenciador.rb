@@ -3,6 +3,7 @@ class Gerenciador
 
   def initialize #initialize é a primeira função que o ruby procura
     @server = TCPServer.open(5151) #abre um servidor na porta 5151
+    @server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEPORT, 1)
     @clients = [] #lista de clientes, declaro como vazia
 
     main #chamo a função main
@@ -67,15 +68,7 @@ class Gerenciador
     owner_port = @clients[choice][:socket_port]
 		owner_ipv4 = @clients[choice][:client_ip]
 
-		Thread.fork do
-			@owner_socket = TCPSocket.open(owner_ipv4, owner_port)
-			@owner_socket.puts "UPLOAD"
-			@owner_socket.puts @ipv4, client.socket_port, file_to_send
-			message = @owner_socket.gets
-
-			puts "FROM: #{@ipv4} #{message}"
-			puts "FILE: #{file} FROM: #{@ipv4} TO: #{owner_ipv4}"
-		end
+		
 
   end
 

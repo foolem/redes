@@ -120,10 +120,22 @@ class Fclient
     end
 
     puts "Escolha o arquivo a ser baixado"
-    choice = gets.to_i
-    @socket.puts choice
+    choice_file = gets.to_i
+    @socket.puts choice_file
     puts @socket.gets
     puts "--------------------------------------\n\r"
+		file_to_send = clients[choice][:files][choice_file]
+
+		Thread.fork do
+			@owner_socket = TCPSocket.open(clients[choice][:client_ip], 6000)
+			@owner_socket.puts "UPLOAD"
+			@owner_socket.puts 200.0.0.3, 6002, file_to_send
+			message = @owner_socket.gets
+
+			puts "FROM: #{@ipv4} #{message}"
+			puts "FILE: #{file} FROM: #{@ipv4} TO: #{owner_ipv4}"
+		end
+
 
   end
 
@@ -195,7 +207,9 @@ class Fclient
   end
 
 	def server
-    @server = TCPServer.open(@my_nat_port)
+    @server = TCPServer.open(6002)
+		@server.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEPORT, 1)
+
 
     @client_list = []
     loop do
@@ -217,7 +231,9 @@ class Fclient
 
       if command == "UPLOAD"
         source_ip = client.gets.chomp
+				source_ip = '200.0.0.2'
         source_port = client.gets.chomp
+				source_port = 6000
         file = client.gets.chomp
         client.puts "FOUND SERVER"
 
