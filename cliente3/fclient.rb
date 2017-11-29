@@ -14,8 +14,8 @@ class Fclient
 		@socket.puts @port
 		Thread.fork { server }
 
-    @id = @socket.gets
-		@my_nat_port = gets.to_i
+    @id = gets.to_i
+		@my_nat_port = @socket.gets.chomp
 		@my_nat_ip = @socket.gets.chomp
   end
 
@@ -225,7 +225,7 @@ class Fclient
     end
   end
 
-  def listener(client)
+   def listener(client)
     sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
 
     loop do
@@ -259,10 +259,11 @@ class Fclient
 						@socket.puts "Problema: #{@my_nat_ip} não conectou com sucesso ao #{source_ip}"
 						@socket_file.puts "Problem"
 					end
+				end
+			end
 
-        end
 
-      elsif command == "Download"
+      if command == "Download"
 
         puts "Recebendo arquivo"
 
@@ -280,9 +281,9 @@ class Fclient
 
         puts "Arquivo Recebido :)"
 				@socket.puts "Arquivo #{file} foi enviado de #{source_ip} para #{@my_nat_ip}"
-      end
+			end
 
-			elsif command == "Problem"
+			if command == "Problem"
 				Thread.fork do
 					puts "Tentando conexão com: #{source_ip}:#{source_port}"
           @socket_file = TCPSocket.open(source_ip, source_port.to_i)
@@ -305,9 +306,10 @@ class Fclient
 						@socket.puts "DualProblema: a conexão entre #{@my_nat_ip} e #{source_ip}"
 						puts "Erro ao conectar com #{source_ip}"
 					end
+				end
 			end
 
-  end
+  	end
 
 end
 Fclient.new.main

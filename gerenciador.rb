@@ -15,8 +15,8 @@ class Gerenciador
         sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
         @ipv4 = client.gets.chomp
         @socket_port client.gets.chomp
-        client.puts client.peeraddr[1]
-        client.puts client.remote_ip
+        client.puts remote_port
+        client.puts remote_ip
         listen(client) #chamo a função listen e dou como parâmetro o cliente atual
         client.close #caso saia da função listen, ele fecha a conexão com esse cliente
       end
