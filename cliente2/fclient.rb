@@ -10,11 +10,11 @@ class Fclient
 	def initialize
     @socket = TCPSocket.open('200.0.0.1', 5151) #abre a conexão com o gerenciador
     @socket.puts ipv4
-    @port = 5001
+    @port = 5000
 		Thread.fork { server }
 
     @id = @socket.gets
-		@my_id = gets.to_i
+		@my_nat_port = gets.to_i
   end
 
   def main
@@ -195,7 +195,7 @@ class Fclient
   end
 
 	def server
-    @server = TCPServer.open(@port)
+    @server = TCPServer.open(@my_nat_port)
 
     @client_list = []
     loop do

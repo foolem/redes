@@ -11,8 +11,9 @@ class Gerenciador
   def main
     loop do #loop infinito
       Thread.fork(@server.accept) do |client| #pra cada cliente eu crio uma Thread
+        sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
         @ipv4 = client.gets.chomp
-        client.puts client.object_id
+        client.puts client.peeraddr[1]
 
         listen(client) #chamo a função listen e dou como parâmetro o cliente atual
         client.close #caso saia da função listen, ele fecha a conexão com esse cliente
@@ -62,24 +63,19 @@ class Gerenciador
     file_to_send = @clients[choice][:files][file]
     client.puts file_to_send
 
-
-
-		owner = @clients[choice]
 		owner_server_port = @clients[choice][:port_server]
+    owner_port = @clients[choice][:socket_port]
 		owner_ipv4 = @clients[choice][:client_ip]
 
 		Thread.fork do
-			@owner_socket = TCPSocket.open(owner_ipv4, owner_server_port)
+			@owner_socket = TCPSocket.open(owner_ipv4, owner_port)
 			@owner_socket.puts "UPLOAD"
-			@owner_socket.puts @ipv4, client.port_server, file_to_send
+			@owner_socket.puts @ipv4, client.socket_port, file_to_send
 			message = @owner_socket.gets
 
 			puts "FROM: #{@ipv4} #{message}"
 			puts "FILE: #{file} FROM: #{@ipv4} TO: #{owner_ipv4}"
 		end
-
-		client.puts "SENDING FILE WISH"
-
 
   end
 
@@ -125,7 +121,7 @@ class Gerenciador
     end
 
     @clients.push({
-      :port_socket => remote_port,
+      :socket_port => remote_port,
       :port_server => @port,
       :client_ip => remote_ip,
       :files => files
